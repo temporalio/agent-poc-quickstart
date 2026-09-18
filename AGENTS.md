@@ -91,6 +91,13 @@ code sample for dotnet, ruby, or rust — tell the user when that applies.
 - Idempotency key on any retried call with side effects.
 - Activities, not Child Workflows, unless a `when` says otherwise.
 - Never print or commit an API key.
+- Never put a key on a command line. It lands in shell history and `ps`, and any
+  tool that rejects the argument may echo it back. Export `TEMPORAL_API_KEY` and
+  let the CLI and SDK read it from the environment.
+- Never echo, cat, or interpolate a variable holding a key. Check a key by
+  making a call that succeeds, not by printing it.
+- If a key is exposed anyway, say so immediately and disable it before
+  continuing.
 - Define Workflow versus Activity once, in two sentences, the first time each
   appears, and state the determinism rule the first time they write Workflow
   code. No lecturing beyond that.

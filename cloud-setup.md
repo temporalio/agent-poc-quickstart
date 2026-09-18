@@ -95,6 +95,10 @@ Start the Worker against Cloud, run the Workflow, and show it in the Cloud UI.
 
 ### If it does not connect
 
+- **A newly minted key or namespace needs a moment to propagate.** The first
+  call can fail and the same call succeed ~10 seconds later. Retry once before
+  concluding the credentials are wrong - otherwise you will start fixing a key
+  that was fine.
 - **Expired or disabled API key** - check the state column in `apikey list`.
 - **Wrong endpoint** - the gRPC address is regional, and the mTLS address is
   different from the API-key address.
