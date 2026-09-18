@@ -42,9 +42,28 @@ code sample for dotnet, ruby, or rust — tell the user when that applies.
    the Worker and the starter, and confirm the Workflow completes. Never report
    a run you did not observe.
 
-4. **Present the prototype and the design.** Show the completed Workflow, walk
-   through `DESIGN.md`, and say what is mocked. Then ask: use this as is, or
-   change it? Keep it short — they have working code in front of them.
+4. **Present what you built, in plain terms.** Name each piece and say what it
+   is, so they can see their own use case in the shape:
+
+   - the **Workflow** — the durable function that orders the steps and survives
+     crashes and restarts
+   - the **Activities** — the individual steps that touch the outside world,
+     each with what it does and its timeout. Say plainly which are mocked
+   - the **namespace** — the isolated environment this execution and its history
+     live in (locally, the dev server's `default`)
+   - the **Task Queue and Worker** — the queue work is routed through, and the
+     process running their code that polls it
+
+   A sentence or two each. Tie it back to their use case, not to Temporal
+   vocabulary: they should recognise their own pipeline, not learn a glossary.
+   `DESIGN.md` carries the detail — timeouts, retries, patterns, what is left
+   out — for them to read rather than be walked through.
+
+   Then give them two choices:
+
+   - **run it on Temporal Cloud** — go to step 6
+   - **tell you what they actually want to build** — go to step 5, where their
+     description is matched against the use-case goals and their patterns
 
 5. **Shape it to their problem, re-sharing the design every round.** Each time
    the user gives input: match what they said to a goal in the use-case file,
