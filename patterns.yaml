@@ -1,0 +1,297 @@
+# Temporal design patterns
+#
+# Referenced by id from the files in use-cases/. Defined once here so limits and
+# caveats live in one place.
+#
+# `shape` is the minimal structure, for orientation only - read the `url` before
+# implementing. Append `.md` to any URL for raw Markdown.
+#
+# `code` lists the SDKs with a sample on that page. For an SDK not listed
+# (dotnet, ruby, rust), read the prose here and translate using the
+# temporal-developer skill's references/{language}/patterns.md.
+
+parallel-execution:
+  name: Parallel Execution
+  url: https://docs.temporal.io/design-patterns/parallel-execution
+  code: [typescript, python, go, java]
+  shape: |
+    schedule every item without awaiting, then gather all results
+    (Promise.all / asyncio.gather / Futures / Promise.allOf)
+  limits: Max 2,000 pending Activities per Workflow Execution; 51,200 history events per run
+  caveats: >
+    Not for operations that depend on each other or require strict ordering. For
+    higher concurrency, partition with Child Workflows or Continue-as-New.
+
+activity-dependency-injection:
+  name: Activity Dependency Injection
+  url: https://docs.temporal.io/design-patterns/activity-dependency-injection
+  code: [typescript, python, go, java]
+  shape: |
+    build clients once at Worker startup, inject into the Activity
+    class/struct, register the instance with the Worker
+  caveats: >
+    Keeps expensive clients out of per-execution setup and out of Workflow code,
+    and lets tests substitute mocks. Not needed for pure functions.
+
+pick-first:
+  name: Pick First (Race)
+  url: https://docs.temporal.io/design-patterns/pick-first
+  code: [typescript, python, go, java]
+  shape: |
+    start N Activities, take the first to complete, cancel the rest
+  caveats: >
+    Cancellation is delivered on the next heartbeat, so losers may have done
+    partial work - including billable calls. Not for cases where you need every
+    result or where side effects must not be cancelled.
+
+child-workflows:
+  name: Child Workflows
+  url: https://docs.temporal.io/design-patterns/child-workflows
+  code: [typescript, python, go, java]
+  shape: |
+    parent starts a child with its own Workflow ID, then awaits its result
+  limits: Hard limit 2,000 pending children per parent; keep the total under 1,000
+  caveats: >
+    For orchestration, not for executing external code. API calls and database
+    queries belong in Activities. Do not use a Child Workflow merely to
+    decompose code.
+
+entity-workflow:
+  name: Entity Workflow
+  url: https://docs.temporal.io/design-patterns/entity-workflow
+  code: [typescript, python, go, java]
+  shape: |
+    one long-lived Workflow per entity id; handlers mutate state; main loop
+    awaits events and checks whether to continue-as-new
+  limits: Not suited above ~100 updates/sec per entity; carried state must fit the 2MB payload limit
+  caveats: >
+    Never call continue-as-new from a handler - set state there and let the main
+    method continue. Wait for all handlers to finish first. For CRUD-only
+    entities, use a database.
+
+signal-with-start:
+  name: Signal with Start
+  url: https://docs.temporal.io/design-patterns/signal-with-start
+  code: [typescript, python, go, java]
+  shape: |
+    one call that starts the Workflow if absent and delivers the Signal either way
+  caveats: >
+    Fire-and-forget, so no return value. If the caller needs synchronous
+    confirmation, use Update-with-Start.
+
+request-response-via-updates:
+  name: Request-Response via Updates
+  url: https://docs.temporal.io/design-patterns/request-response-via-updates
+  code: [typescript, python, go, java]
+  shape: |
+    define an Update with a validator; handler mutates state and returns a
+    typed result to the caller
+  limits: Max 2,000 Updates per Workflow history - continue-as-new before reaching it
+  caveats: >
+    Slower than Signals. Validators must not mutate state or block. Not for
+    fire-and-forget (Signal) or read-only access (Query).
+
+continue-as-new:
+  name: Continue-as-New
+  url: https://docs.temporal.io/design-patterns/continue-as-new
+  code: [typescript, python, go, java]
+  shape: |
+    when history grows, complete this run and atomically start a new one with
+    the same Workflow ID, passing carried state as arguments
+  limits: 51,200 history events per run; continue every 100-1,000 iterations
+  caveats: >
+    Use isContinueAsNewSuggested() rather than a hardcoded threshold. State does
+    not transfer automatically. Not for Workflows needing full history for
+    audit.
+
+long-running-activity:
+  name: Long-Running Activity (Heartbeat)
+  url: https://docs.temporal.io/design-patterns/long-running-activity
+  code: [typescript, python, go, java]
+  shape: |
+    read last checkpoint from heartbeat details, resume from there, heartbeat
+    progress each iteration, catch cancellation to clean up
+  caveats: >
+    Heartbeat timeout must be shorter than start-to-close. Heartbeat details
+    persist across attempts, which is what makes the Activity resumable.
+    Cancellation arrives via heartbeat, so an Activity that never heartbeats
+    cannot be cancelled. Not worth it under ~10 seconds.
+
+retry-metrics:
+  name: Retry Alerting via Metrics
+  url: https://docs.temporal.io/design-patterns/retry-metrics
+  code: [typescript, python, go, java]
+  shape: |
+    inside the Activity, when attempt number exceeds a threshold, increment a
+    counter on the SDK metrics scope
+  caveats: >
+    Emit from the Activity, not the Workflow - Workflows have no direct access to
+    attempt counts. Set the threshold at 5-10 so routine 1-2 attempt retries do
+    not fire it. Alert on rate, not absolute count. Does not change retry
+    behavior.
+
+resumable-activity:
+  name: Resumable Activity (Pause on Failure)
+  url: https://docs.temporal.io/design-patterns/resumable-activity
+  code: [typescript, python, go, java]
+  shape: |
+    bounded retries, then park on a wait condition until a Signal delivers a
+    correction; clear the correction before the next attempt and resume
+  caveats: >
+    Allow a few automatic retries first - parking on the first failure drags
+    operators into problems that resolve themselves. Clear the correction after
+    applying it, or a second failure silently reuses the stale value. Expose
+    state via Query and alert when parked.
+
+non-retryable-errors:
+  name: Non-Retryable Errors
+  url: https://docs.temporal.io/design-patterns/non-retryable-errors
+  code: [typescript, python, go, java]
+  shape: |
+    raise a non-retryable application error, or list error type names in the
+    RetryPolicy at the call site
+  caveats: >
+    Never mark timeouts, service-unavailable, or rate-limit (429) errors
+    non-retryable - they are transient, and doing so removes Temporal's ability
+    to recover.
+
+delayed-retry:
+  name: Delayed Retry
+  url: https://docs.temporal.io/design-patterns/delayed-retry
+  code: [typescript, python, go, java]
+  shape: |
+    read the delay the error itself reports, raise an application failure with
+    nextRetryDelay set to it
+  caveats: >
+    Applies to the immediate next attempt only; later attempts revert to the
+    RetryPolicy. A delay longer than scheduleToCloseTimeout expires the Activity
+    before it retries. Fall back to the RetryPolicy for errors with no reliable
+    delay information.
+
+fixed-count-retries:
+  name: Fixed Count of Retries
+  url: https://docs.temporal.io/design-patterns/fixed-count-retries
+  code: [typescript, python, go, java]
+  shape: |
+    set maximumAttempts on the Activity's RetryPolicy and handle the
+    exhausted-retries error in the Workflow
+  caveats: >
+    maximumAttempts=3 means 3 total attempts, not 3 retries after the first.
+    Disabling retries entirely loses the call if a Worker crashes after the
+    request succeeded but before the result was recorded - pair with idempotency
+    keys.
+
+fast-slow-retries:
+  name: Fast/Slow Retries
+  url: https://docs.temporal.io/design-patterns/fast-slow-retries
+  code: [typescript, python, go, java]
+  shape: |
+    phase 1 - short interval, bounded attempts; on exhaustion, phase 2 - long
+    fixed interval, unlimited attempts
+  caveats: >
+    Phase 1 - initial interval 1-5s, backoff 1.5-2.0, 5-20 attempts. Phase 2 -
+    interval 1-15min, backoff coefficient 1.0, maximumAttempts unset. A finite
+    attempt count in phase 2 defeats the pattern. Log the phase transition.
+
+fixed-wall-time-retries:
+  name: Fixed Wall-Time Retries
+  url: https://docs.temporal.io/design-patterns/fixed-wall-time-retries
+  code: [typescript, python, go, java]
+  shape: |
+    scheduleToCloseTimeout is the total SLA budget, startToCloseTimeout the
+    per-attempt cap; handle the timeout error as an SLA breach
+  caveats: >
+    Queue delay and retry backoff both consume the budget. Cap maximumInterval
+    well below the SLA so retries still fit. Per-attempt timeouts alone cannot
+    enforce an SLA, because a slow system resets the clock each attempt.
+
+sliding-window:
+  name: Sliding Window
+  url: https://docs.temporal.io/design-patterns/sliding-window
+  code: [typescript, python, go, java]
+  shape: |
+    keep exactly windowSize children in flight; each completion starts the next
+    record's child; continue-as-new as the window advances
+  limits: Window size 50-200 to start; keep total children under 1,000 per parent; each in-flight child counts toward the 2,000 unfinished-actions limit
+  caveats: >
+    Needs stable child Workflow IDs and a parent that keeps its ID across
+    continue-as-new runs. More complex than sequential processing. If ordered
+    processing matters, use Batch Iterator instead.
+
+fanout-child-workflows:
+  name: Fan-Out with Child Workflows
+  url: https://docs.temporal.io/design-patterns/fanout-child-workflows
+  code: [typescript, python, go, java]
+  shape: |
+    precompute chunk count, start one child per chunk passing offset and
+    length, await them all
+  limits: Keep under 1,000 children per parent; chunk at ~500 records, fewer if each record maps to an Activity
+  caveats: >
+    Maximum concurrency with no rate control - it will hit downstream systems as
+    hard as it can. Pass offset and length rather than ID lists, and let each
+    child fetch its own records, to keep history small.
+
+batch-iterator:
+  name: Batch Iterator
+  url: https://docs.temporal.io/design-patterns/batch-iterator
+  code: [typescript, python, go, java]
+  shape: |
+    fetch one page at an offset, process its records, then continue-as-new with
+    offset + pageSize while a full page came back
+  limits: 51,200 history events per run (target 2,000); page size 500-800 records, producing roughly 3x pageSize events
+  caveats: >
+    Sequential by design - one page at a time. If record-set-wide throughput
+    matters more than pacing, use Sliding Window or MapReduce Tree.
+
+mapreduce-tree:
+  name: MapReduce Tree
+  url: https://docs.temporal.io/design-patterns/mapreduce-tree
+  code: [typescript, python, go, java]
+  shape: |
+    recursively split the range into child Workflows until a leaf threshold,
+    map at the leaves, aggregate results back up the tree
+  limits: Leaf threshold 3-10 records; max 1,000 direct children per parent; depth guard log2(totalRecords / leafThreshold) + 2
+  caveats: >
+    Assumes downstream systems tolerate unbounded concurrent bursts. Child
+    Workflows emit more events than Activities - for lightweight per-record
+    work, make the leaves Activities. For smaller sets, a flat fan-out is
+    simpler.
+
+downstream-rate-limiting:
+  name: Downstream Rate Limiting
+  url: https://docs.temporal.io/design-patterns/downstream-rate-limiting
+  code: [typescript, python, go, java]
+  shape: |
+    dedicated Workers poll a rate-limited Task Queue with
+    MaxTaskQueueActivitiesPerSecond set; throttled Activities are routed there
+    by a task queue override in Activity options
+  caveats: >
+    Per-queue, not per-worker - 5 RPS on each of two Workers yields 5 combined,
+    not 10. The server averages over time and can burst across partitions, so
+    set the cap below any hard downstream limit. Disable eager Activity start in
+    Python. Use it for rate limits, not concurrency limits.
+
+priority-task-queues:
+  name: Priority
+  url: https://docs.temporal.io/design-patterns/priority-task-queues
+  code: [typescript, python, go, java]
+  shape: |
+    assign a priority key when scheduling; higher priority dispatches first
+    within the same Task Queue
+  limits: Priority key range is 1-5 only
+  caveats: >
+    A continuously replenished high-priority backlog can starve lower priorities
+    indefinitely. For hard capacity isolation between tiers, use separate Task
+    Queues with dedicated Worker pools.
+
+fairness:
+  name: Fairness
+  url: https://docs.temporal.io/design-patterns/fairness
+  code: [typescript, python, go, java]
+  shape: |
+    assign a fairness key (usually tenant id) and optional weight when
+    scheduling; dispatch round-robins across keys within a priority level
+  caveats: >
+    Best effort - no exact ratios, no concurrency limits, no compute isolation.
+    Weight changes do not reorder an existing backlog. Tasks with no key share
+    an implicit key at weight 1.0. New tenants need a new key, not new Workers.

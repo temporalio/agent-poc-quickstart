@@ -1,0 +1,102 @@
+# Use case: Data pipelines, ETL, or background processing
+#
+# Build `default_prototype` first, before asking the user anything. Use `goals`
+# later, once they describe what they actually want, to pick the patterns that
+# fit - taking a pattern only if its `when` holds.
+#
+# Read referenced patterns in patterns.yaml.
+
+title: Data pipelines, ETL, or background processing
+
+default_prototype:
+  build: >
+    Process a synthetic set of a few hundred records in chunks. The parent
+    Workflow computes chunk boundaries and starts one child Workflow per chunk,
+    passing offset and length; each child processes its chunk in an Activity and
+    returns a count; the parent sums the counts. Mock the data source so the run
+    is deterministic and free. It completes successfully on the first run.
+  patterns: [fanout-child-workflows, parallel-execution]
+  shows: >
+    A record set distributed across independently tracked child Workflows, each
+    visible in the UI, with results gathered back into one total.
+
+goals:
+
+  many-records:
+    label: Process many records reliably
+    patterns:
+      - id: fanout-child-workflows
+        when: The record count is known up front, chunks stay under 1,000, and each chunk needs independent tracking
+      - id: batch-iterator
+        when: The record count is unknown or unbounded
+      - id: sliding-window
+        when: The set is large and a downstream system needs protecting
+      - id: parallel-execution
+        when: The set is small enough to fit inside one Workflow
+    notes: >
+      Pass references, not data. Activities fetch and write the records; the
+      Workflow carries only offsets, keys, or IDs.
+
+  large-dataset:
+    label: Process a large or unbounded dataset
+    patterns:
+      - id: batch-iterator
+        when: You need a durable checkpoint after every page and sequential throughput is acceptable
+      - id: continue-as-new
+        when: Iteration would otherwise grow history past its limits
+      - id: sliding-window
+        when: Sequential pages are too slow but concurrency must stay bounded
+      - id: mapreduce-tree
+        when: Throughput matters more than pacing and aggregation is hierarchical
+
+  controlled-concurrency:
+    label: Run work in parallel while controlling concurrency
+    patterns:
+      - id: sliding-window
+        when: Concurrency must stay bounded over a large or moving set of items
+      - id: downstream-rate-limiting
+        when: The real constraint is requests per second rather than in-flight count
+      - id: fanout-child-workflows
+        when: No rate control is needed and the chunk count stays under 1,000
+      - id: batch-iterator
+        when: Ordered, sequential processing is required
+
+  protect-downstream:
+    label: Avoid overwhelming a database, API, or downstream system
+    patterns:
+      - id: downstream-rate-limiting
+        when: The downstream publishes an explicit requests-per-second limit
+      - id: sliding-window
+        when: The constraint is concurrent in-flight work rather than a rate
+      - id: priority-task-queues
+        when: Urgent work shares a Task Queue with batch work
+      - id: fairness
+        when: Multiple tenants share capacity and large ones must not starve small ones
+
+  recover-partial-failure:
+    label: Resume or recover after partial failure
+    patterns:
+      - id: batch-iterator
+        when: A restart must resume mid-set from the last completed page
+      - id: long-running-activity
+        when: One long Activity must resume from its last heartbeat checkpoint after a Worker crash
+      - id: resumable-activity
+        when: Retries are exhausted because input data is wrong and a human can correct it, after which the Workflow resumes in place
+      - id: fast-slow-retries
+        when: The dependency suffers both brief blips and sustained outages
+    requires: >
+      Writes must be idempotent, or resumption reprocesses work that already
+      landed.
+
+  aggregate-results:
+    label: Aggregate or reduce results from a large workload
+    patterns:
+      - id: mapreduce-tree
+        when: Aggregation is hierarchical and records need independent histories and per-record visibility
+      - id: fanout-child-workflows
+        when: A flat fan-out plus a single reduce step is enough
+      - id: parallel-execution
+        when: All results fit inside one Workflow's history
+    notes: >
+      For lightweight per-record work, use Activities rather than leaf Workflows
+      - Child Workflows emit more events.
