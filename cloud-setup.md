@@ -22,8 +22,9 @@ what it does. For most users this is their first time seeing any of it.
 temporal cloud login
 ```
 
-Opens a browser. **Give the user this command to run themselves** - the browser
-handoff needs them.
+**Run it yourself.** It opens a browser for the user to finish signing in, then
+prints `Login successful!` and stores the token locally. Tell them a tab is
+opening and why - don't hand them the command to type.
 
 ### 2. Namespace
 

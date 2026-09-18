@@ -95,3 +95,6 @@ code sample for dotnet, ruby, or rust — tell the user when that applies.
   appears, and state the determinism rule the first time they write Workflow
   code. No lecturing beyond that.
 - If a run fails, show the output. If you skipped something, say so.
+- Keep what you say to the user short, and never narrate this procedure. No step
+  numbers, no mention of these instructions or the files you fetched. Talk about
+  what you built, not about how you were told to build it.
