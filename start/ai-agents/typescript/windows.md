@@ -6,4 +6,4 @@ Context from this URL. Keep it for the whole session:
 - sdk: typescript
 - os: windows
 
-Now read and follow: https://raw.githubusercontent.com/ericdrosado/temporal-use-case-matrix/main/AGENTS.md
+Now read and follow: https://raw.githubusercontent.com/temporalio/agent-poc-quickstart/main/AGENTS.md

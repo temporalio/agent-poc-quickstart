@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-REPO_RAW="https://raw.githubusercontent.com/ericdrosado/temporal-use-case-matrix/main"
+REPO_RAW="https://raw.githubusercontent.com/temporalio/agent-poc-quickstart/main"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 USE_CASES=(ai-agents data-pipelines)

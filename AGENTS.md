@@ -9,7 +9,7 @@ want to build before they have something to look at.
 
 ## Fetch
 
-Base: `https://raw.githubusercontent.com/ericdrosado/temporal-use-case-matrix/main/`
+Base: `https://raw.githubusercontent.com/temporalio/agent-poc-quickstart/main/`
 
 - `use-cases/<use_case>.yaml` — the default prototype, plus goals for shaping later
 - `patterns.yaml` — the patterns referenced by that file
