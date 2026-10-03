@@ -1,58 +1,84 @@
-# Temporal use-case matrix
+# Agent PoC Quickstart
 
-Routing layer that turns a profiled user into a working Temporal proof of
-concept. Profiling happens in the UI; the user is handed a URL that encodes
-their answers and types `fetch <url>` to their coding agent.
+> [!WARNING]
+> This project is experimental and will change.
+
+Give your coding agent one URL and get a working Temporal proof of concept for
+your use case. The agent builds it, runs it locally, explains it, and moves it
+to Temporal Cloud when you're ready.
+
+## Quick start
+
+Paste this into your coding agent, replacing the three values:
 
 ```
-start/<use-case>/<sdk>/<os>.md
+fetch https://raw.githubusercontent.com/temporalio/agent-poc-quickstart/main/start/<use-case>/<sdk>/<os>.md
 ```
 
-That start page records the profile and sends the agent to `AGENTS.md`. The agent
-builds a prototype for their use case, runs it on the local dev server, presents
-it with a design, shapes it to what they actually want, then moves it to Temporal
-Cloud.
-
-## Layout
-
-| File | Contents |
+| Value | Options |
 |---|---|
-| `AGENTS.md` | The procedure the agent follows |
-| `patterns.yaml` | Design patterns, defined once: docs URL, shape, limits, caveats |
-| `use-cases/*.yaml` | Per use case: the default prototype, plus goals mapped to patterns with `when` conditions |
-| `cloud-setup.md` | CLI install, Temporal Cloud connection, Worker placement |
-| `templates/DESIGN.md` | The design the agent writes into the user's project |
-| `start/**` | Generated routing stubs — never hand-edit |
-| `scripts/generate-start-pages.sh` | Regenerates `start/` |
+| `<use-case>` | `ai-agents`, `data-pipelines` |
+| `<sdk>` | `typescript`, `python`, `go`, `java`, `dotnet`, `ruby`, `rust` |
+| `<os>` | `macos`, `linux`, `windows` |
 
-## What lives here, and what doesn't
+For example, an AI agent in Python on macOS:
 
-This repo holds **only** the mapping from a user's use case to Temporal patterns,
-plus the procedure for building a PoC.
+```
+fetch https://raw.githubusercontent.com/temporalio/agent-poc-quickstart/main/start/ai-agents/python/macos.md
+```
 
-- **Pattern content** belongs to [docs.temporal.io/design-patterns](https://docs.temporal.io/design-patterns). `patterns.yaml` carries a compressed `when`, `shape`, and `caveats`, then links out; the agent reads the page before implementing.
-- **Language specifics** — install, layout, determinism, idioms — belong to the temporal-developer skill (`references/<sdk>/`). Nothing language-specific is stored here.
+For best results, install the Temporal skill for your agent first:
+[docs.temporal.io/with-ai](https://docs.temporal.io/with-ai).
 
-Any docs page is available as raw Markdown by appending `.md` to its URL.
+## What your agent does
 
-## Design notes
+1. **Builds a working prototype right away.** No questions first. Model, API,
+   and data-source calls are mocked, so the first run is deterministic and free.
+2. **Runs it on a local Temporal dev server** and confirms it completes.
+3. **Walks you through the pieces** (Workflow, Activities, Task Queue, Worker)
+   in terms of your use case, and writes a `DESIGN.md` into your project.
+4. **Shapes it to what you're building.** Describe your real problem; the agent
+   updates the design, shows it to you, then changes the code.
+5. **Moves it to Temporal Cloud** when you're happy with it, explaining each
+   step, and helps you decide where the Worker should run.
 
-**`when` conditions, not one recommendation.** Several patterns can fit one goal
-for different reasons. Each carries the condition under which it applies, with
-the real numbers — 1,000 children per parent, 2,000 pending Activities, 51,200
-history events — so the choice is arithmetic rather than taste.
+Step 5 needs a Temporal Cloud account. The agent installs the Temporal CLI if
+it's missing.
 
-**Prototype first, questions later.** The agent builds from the profile alone and
-shows working code before asking anything. The first question the user gets is
-"use this as is, or change it?"
+## Use cases
 
-**The design is the anchor.** `DESIGN.md` is rewritten and re-shared every time
-the user gives input, which keeps the agent consistent as the session grows.
+| Use case | Starting prototype |
+|---|---|
+| **AI agents & applications** | Plans topics, researches three in parallel, and synthesizes a report |
+| **Data pipelines, ETL, or background processing** | Splits a record set into chunks, processes each in a child Workflow, and totals the results |
 
-**No injected failures.** The prototype works on the first run. This is a proof
-of concept, not a tutorial.
+From there, the agent matches what you describe to Temporal
+[design patterns](https://docs.temporal.io/design-patterns): retries,
+rate limiting, batching, durable agent state, and more.
 
-## Status
+## How it works
 
-Interim, and a team PoC. Adding a use case means one file under `use-cases/` and
-a re-run of the generator.
+Each start page records your use case, SDK, and OS, then points the agent to
+the procedure in this repo. Pattern guidance links to
+[docs.temporal.io](https://docs.temporal.io/design-patterns), and
+language-specific guidance comes from the
+[Temporal developer skill](https://github.com/temporalio/skill-temporal-developer),
+so this repo only maps use cases to patterns.
+
+| Path | Contents |
+|---|---|
+| `AGENTS.md` | The steps the agent follows |
+| `use-cases/*.yaml` | Each use case's starting prototype and goals, mapped to patterns |
+| `patterns.yaml` | Pattern definitions, with the conditions and limits for choosing each |
+| `cloud-setup.md` | CLI install, Temporal Cloud connection, Worker hosting options |
+| `templates/DESIGN.md` | The design document the agent writes into your project |
+| `start/` | Generated start pages. Don't edit by hand. |
+
+## Contributing
+
+To add a use case, add a file under `use-cases/`, add its id and label to
+`scripts/generate-start-pages.sh`, and run the script.
+
+## License
+
+MIT
