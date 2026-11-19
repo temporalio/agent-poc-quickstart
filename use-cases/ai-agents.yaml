@@ -1,23 +1,11 @@
 # Use case: AI agents & applications
 #
-# Build `default_prototype` first, before asking the user anything. Use `goals`
-# later, once they describe what they actually want, to pick the patterns that
-# fit - taking a pattern only if its `when` holds.
+# Offer each goal's `label` when asking what the user wants to build. Match
+# their answer to a goal and take a pattern only if its `when` holds.
 #
 # Read referenced patterns in patterns.yaml.
 
 title: AI agents & applications
-
-default_prototype:
-  build: >
-    A three-stage pipeline: planTopics -> researchTopic x3 in parallel ->
-    synthesizeReport. One Workflow, four Activities. Mock the model and search
-    calls so they return fixed, plausible text and the run is deterministic and
-    free. It completes successfully on the first run.
-  patterns: [parallel-execution, activity-dependency-injection]
-  shows: >
-    Multiple model and tool steps orchestrated in one durable Workflow, with the
-    middle stage fanned out in parallel and gathered.
 
 goals:
 
