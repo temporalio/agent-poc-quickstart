@@ -10,10 +10,10 @@
 
 Verify with `temporal --version`.
 
-## Moving the prototype to Temporal Cloud
+## Moving the PoC to Temporal Cloud
 
-The user already has a Cloud account. Do this once they are happy with the
-prototype, and **narrate each step** - what you are creating, why it is needed,
+The user already has a Cloud account. Do this as soon as they choose to - it
+does not need to be finished first - and **narrate each step** - what you are creating, why it is needed,
 what it does. For most users this is their first time seeing any of it.
 
 ### 1. Log in
