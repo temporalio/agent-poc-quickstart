@@ -31,20 +31,44 @@ opening and why - don't hand them the command to type.
 > A namespace is an isolated environment. Workflow history, Task Queues, and
 > visibility all live inside it, and nothing crosses between namespaces.
 
+Each user gets one PoC namespace, **`tpoc-<tag>`**, where the tag is the part
+of their email before the `@`: lowercase letters and digits only, at most 26
+characters. Reuse it when it exists, so a second run lands in the same place. Do
+not offer other namespaces in the account. If the user names a specific
+namespace they already have, use that one as named and skip the rest of this
+step.
+
+Read the email from `user.spec.email`, then look up their namespace by exact
+name:
+
 ```
-temporal cloud namespace list
+temporal cloud whoami -o json
+temporal cloud namespace list --name tpoc-<tag> -o json
 ```
 
-If they have one they want to use, use it as named. Otherwise create one and
-**prefix the name with `tpoc-`**:
+- **It exists:** reuse it. Confirm it accepts API keys:
+  `temporal cloud namespace get --namespace <handle> -o json` must show
+  `spec.apiKeyAuth.enabled: true`. If it doesn't, ask for a short ending and
+  create `tpoc-<tag>-<ending>` instead (39 characters at most).
+- **It doesn't:** ask which region, using an exact id from
+  `temporal cloud region list` (they are provider-prefixed, e.g.
+  `aws-us-east-1`), and create it. Pass only the bare name; Cloud appends the
+  account id. Then get the full handle with the same `namespace list --name`
+  call.
+- **No email from `whoami`:** ask for a short name ending and use
+  `tpoc-<ending>` the same way.
 
 ```
 temporal cloud namespace create \
-  --name tpoc-<something> \
+  --name tpoc-<tag> \
   --region <region> \
   --retention-days 30 \
   --api-key-auth-enabled
 ```
+
+If `create` is refused with a permission or plan error, the account cannot
+create namespaces. Stop and tell the user to ask an account owner; do not fall
+back to another namespace.
 
 ### 3. Connection details
 
