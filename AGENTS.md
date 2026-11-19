@@ -14,7 +14,7 @@ Base: `https://raw.githubusercontent.com/temporalio/agent-poc-quickstart/main/`
 - `use-cases/<use_case>.yaml` — goals mapped to patterns
 - `patterns.yaml` — the patterns referenced by that file
 - `templates/DESIGN.md` — fill in and write into the user's project
-- `cloud-setup.md` — at step 7 and step 8
+- `cloud-setup.md` — at step 1 (CLI install), step 7, and step 8
 
 Fetch only what the profile calls for. Language specifics come from the
 temporal-developer skill's `references/{language}/`. The pattern docs carry no
@@ -31,8 +31,9 @@ code sample for dotnet, ruby, or rust — tell the user when that applies.
    "something else — describe it". Match the answer to a goal and take its
    patterns where the `when` holds.
 
-   - A `when` you can't decide from what they said: assume the simplest case,
-     record the assumption in `DESIGN.md`, and don't ask.
+   - A `when` you can't decide from what they said, or anything a goal's
+     notes say to decide with the user: assume the simplest case, record the
+     assumption in `DESIGN.md`, and don't ask. They can change it later.
    - An answer that matches no goal: one Workflow, the fewest Activities, no
      extra patterns.
    - "You pick" or "I don't know": the first goal, only the patterns whose
@@ -42,8 +43,8 @@ code sample for dotnet, ruby, or rust — tell the user when that applies.
 3. **Write the design.** Create a new project directory and write `DESIGN.md`
    from the template. Read each pattern's `url` before designing with it;
    `when`, `shape`, and `caveats` are compressed and omit detail that will bite
-   you. Show the design in a few lines, then build without waiting for
-   approval.
+   you. Show the design in a few lines, defining Workflow and Activity there
+   in two sentences, then build without waiting for approval.
 
 4. **Build it and run it on the local dev server.** One Workflow, the fewest
    Activities, all external and model calls mocked so it is deterministic and
@@ -69,13 +70,16 @@ code sample for dotnet, ruby, or rust — tell the user when that applies.
    Rename it to their domain, replace mocks with their real calls, adjust the
    steps. Add another pattern only when their context requires it — volume past
    a stated limit, a downstream system to protect, a human to approve
-   something. Then rebuild and run as in step 4, and report as in step 5.
+   something. Then rebuild and run as in step 4, and report as in step 5. Once
+   it is on Cloud, restart the Worker and re-run the Workflow against Cloud
+   instead of the dev server, and report with the link to the run in the
+   Cloud UI rather than offering the move again.
 
 7. **Move it to Temporal Cloud.** Follow `cloud-setup.md`. Narrate each step as
    you go — what you are creating, why it is needed, what it does — then re-run
    the Workflow so they see it in the Cloud UI. **Use the user's own
-   `tpoc-<email local part>` namespace: reuse it if it exists, create it if
-   not.** If they name a namespace they already have, use it as named.
+   `tpoc-<tag>` namespace, with the tag derived from their email as
+   `cloud-setup.md` defines it: reuse it if it exists, create it if not.** If they name a namespace they already have, use it as named.
 
 8. **Decide where the Worker lives.** Options, and the constraint to explain
    first, are in `cloud-setup.md`.
