@@ -78,8 +78,9 @@ code sample for dotnet, ruby, or rust — tell the user when that applies.
 6. **Move it to Temporal Cloud.** Once they are happy with the prototype,
    follow `cloud-setup.md`. Narrate each step as you go — what you are
    creating, why it is needed, what it does — then re-run the Workflow so they
-   see it in the Cloud UI. **Prefix any namespace you create with `tpoc-`.** If
-   they point you at a namespace they already have, use it as named.
+   see it in the Cloud UI. **Use the user's own `tpoc-<email local part>`
+   namespace: reuse it if it exists, create it if not.** If they name a
+   namespace they already have, use it as named.
 
 7. **Decide where the Worker lives.** Options, and the constraint to explain
    first, are in `cloud-setup.md`.
