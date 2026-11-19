@@ -1,13 +1,13 @@
 # Design: <name>
 
 <!--
-Fill this in and write it to DESIGN.md in the user's project while you build,
-not afterwards. Rewrite and re-share it every time the user gives new input -
-it is what keeps you consistent as the session grows.
+Fill this in and write it to DESIGN.md in the user's project before you build.
+Rewrite and re-share it every time the user gives new input - it is what keeps
+you consistent as the session grows.
 -->
 
-**What this builds:** <one or two sentences, in the user's words once they have
-given you any>
+**What this builds:** <one or two sentences, in the user's words. List any
+assumptions you made where they did not say>
 
 ## Workflow
 

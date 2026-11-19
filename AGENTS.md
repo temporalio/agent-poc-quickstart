@@ -1,20 +1,20 @@
 # Temporal PoC agent instructions
 
-Build a working Temporal prototype for the user's use case, show it to them,
-shape it into what they actually want, then move it to Temporal Cloud.
+Find out what the user wants to build, build a working Temporal PoC for it, run
+it locally, then move it to Temporal Cloud.
 
 The start page they fetched carries their profile: `use_case`, `sdk`, `os`. Keep
-that context for the whole session. Don't re-ask it, and don't ask what they
-want to build before they have something to look at.
+that context for the whole session and don't re-ask it. Ask what they want to
+build at most once, and only if their prompt hasn't already said.
 
 ## Fetch
 
 Base: `https://raw.githubusercontent.com/temporalio/agent-poc-quickstart/main/`
 
-- `use-cases/<use_case>.yaml` — the default prototype, plus goals for shaping later
+- `use-cases/<use_case>.yaml` — goals mapped to patterns
 - `patterns.yaml` — the patterns referenced by that file
 - `templates/DESIGN.md` — fill in and write into the user's project
-- `cloud-setup.md` — at step 6 and step 7
+- `cloud-setup.md` — at step 7 and step 8
 
 Fetch only what the profile calls for. Language specifics come from the
 temporal-developer skill's `references/{language}/`. The pattern docs carry no
@@ -24,65 +24,60 @@ code sample for dotnet, ruby, or rust — tell the user when that applies.
 
 1. **Install what's missing.** `temporal --version`; install per their OS if
    absent (see `cloud-setup.md`). Skill or plugin:
-   https://docs.temporal.io/with-ai. The SDK comes with the project in step 2.
+   https://docs.temporal.io/with-ai. The SDK comes with the project in step 4.
 
-2. **Build the default prototype.** Create a new project directory and build
-   the `default_prototype` from the use-case file. One Workflow, the fewest
+2. **Find out what to build.** If their prompt already says, don't ask.
+   Otherwise ask once: offer each goal's `label` from the use-case file, plus
+   "something else — describe it". Match the answer to a goal and take its
+   patterns where the `when` holds.
+
+   - A `when` you can't decide from what they said: assume the simplest case,
+     record the assumption in `DESIGN.md`, and don't ask.
+   - An answer that matches no goal: one Workflow, the fewest Activities, no
+     extra patterns.
+   - "You pick" or "I don't know": the first goal, only the patterns whose
+     `when` holds for its simplest version, in a concrete, plausible domain
+     you state as an assumption.
+
+3. **Write the design.** Create a new project directory and write `DESIGN.md`
+   from the template. Read each pattern's `url` before designing with it;
+   `when`, `shape`, and `caveats` are compressed and omit detail that will bite
+   you. Show the design in a few lines, then build without waiting for
+   approval.
+
+4. **Build it and run it on the local dev server.** One Workflow, the fewest
    Activities, all external and model calls mocked so it is deterministic and
    costs nothing. Task Queue and namespace as configuration, never hardcoded.
-   Read each pattern's `url` before implementing it; `when`, `shape`, and
-   `caveats` are compressed and omit detail that will bite you. Write
-   `DESIGN.md` from the template as you build, not after.
+   Start `temporal server start-dev`, run the Worker and the starter, and
+   confirm the Workflow completes. Never report a run you did not observe.
 
    **Build something that works.** Do not inject failures, flaky steps, or
    retry demonstrations. This is a proof of concept, not a tutorial. If the user
    wants to see failure and recovery, they will ask.
 
-3. **Run it on the local dev server.** Start `temporal server start-dev`, run
-   the Worker and the starter, and confirm the Workflow completes. Never report
-   a run you did not observe.
+5. **Report the run.** A few sentences: what ran, where, and which calls are
+   mocked. No glossary — `DESIGN.md` carries the detail. Then offer:
 
-4. **Present what you built, in plain terms.** Name each piece and say what it
-   is, so they can see their own use case in the shape:
+   - **move it to Temporal Cloud** — the recommended next step; go to step 7
+   - **change something** — go to step 6
 
-   - the **Workflow** — the durable function that orders the steps and survives
-     crashes and restarts
-   - the **Activities** — the individual steps that touch the outside world,
-     each with what it does and its timeout. Say plainly which are mocked
-   - the **namespace** — the isolated environment this execution and its history
-     live in (locally, the dev server's `default`)
-   - the **Task Queue and Worker** — the queue work is routed through, and the
-     process running their code that polls it
+6. **Change it, re-sharing the design every round.** Each time the user gives
+   input: match what they said to a goal in the use-case file, take that goal's
+   patterns where the `when` holds, rewrite `DESIGN.md`, and present the
+   revised design **before** building. Never build from the conversation alone
+   — the written design is what keeps you consistent as the session grows.
+   Rename it to their domain, replace mocks with their real calls, adjust the
+   steps. Add another pattern only when their context requires it — volume past
+   a stated limit, a downstream system to protect, a human to approve
+   something. Then rebuild and run as in step 4, and report as in step 5.
 
-   A sentence or two each. Tie it back to their use case, not to Temporal
-   vocabulary: they should recognise their own pipeline, not learn a glossary.
-   `DESIGN.md` carries the detail — timeouts, retries, patterns, what is left
-   out — for them to read rather than be walked through.
+7. **Move it to Temporal Cloud.** Follow `cloud-setup.md`. Narrate each step as
+   you go — what you are creating, why it is needed, what it does — then re-run
+   the Workflow so they see it in the Cloud UI. **Use the user's own
+   `tpoc-<email local part>` namespace: reuse it if it exists, create it if
+   not.** If they name a namespace they already have, use it as named.
 
-   Then give them two choices:
-
-   - **run it on Temporal Cloud** — go to step 6
-   - **tell you what they actually want to build** — go to step 5, where their
-     description is matched against the use-case goals and their patterns
-
-5. **Shape it to their problem, re-sharing the design every round.** Each time
-   the user gives input: match what they said to a goal in the use-case file,
-   take that goal's patterns where the `when` holds, rewrite `DESIGN.md`, and
-   present the revised design **before** building. Never build from the
-   conversation alone — the written design is what keeps you consistent as the
-   session grows. The prototype is the scaffold: rename it to their domain,
-   replace mocks with their real calls, adjust the steps. Add another pattern
-   only when their context requires it — volume past a stated limit, a
-   downstream system to protect, a human to approve something.
-
-6. **Move it to Temporal Cloud.** Once they are happy with the prototype,
-   follow `cloud-setup.md`. Narrate each step as you go — what you are
-   creating, why it is needed, what it does — then re-run the Workflow so they
-   see it in the Cloud UI. **Use the user's own `tpoc-<email local part>`
-   namespace: reuse it if it exists, create it if not.** If they name a
-   namespace they already have, use it as named.
-
-7. **Decide where the Worker lives.** Options, and the constraint to explain
+8. **Decide where the Worker lives.** Options, and the constraint to explain
    first, are in `cloud-setup.md`.
 
 ## Rules

@@ -1,24 +1,11 @@
 # Use case: Data pipelines, ETL, or background processing
 #
-# Build `default_prototype` first, before asking the user anything. Use `goals`
-# later, once they describe what they actually want, to pick the patterns that
-# fit - taking a pattern only if its `when` holds.
+# Offer each goal's `label` when asking what the user wants to build. Match
+# their answer to a goal and take a pattern only if its `when` holds.
 #
 # Read referenced patterns in patterns.yaml.
 
 title: Data pipelines, ETL, or background processing
-
-default_prototype:
-  build: >
-    Process a synthetic set of a few hundred records in chunks. The parent
-    Workflow computes chunk boundaries and starts one child Workflow per chunk,
-    passing offset and length; each child processes its chunk in an Activity and
-    returns a count; the parent sums the counts. Mock the data source so the run
-    is deterministic and free. It completes successfully on the first run.
-  patterns: [fanout-child-workflows, parallel-execution]
-  shows: >
-    A record set distributed across independently tracked child Workflows, each
-    visible in the UI, with results gathered back into one total.
 
 goals:
 

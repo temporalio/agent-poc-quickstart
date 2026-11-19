@@ -3,9 +3,9 @@
 > [!WARNING]
 > This project is experimental and will change.
 
-Give your coding agent one URL and get a working Temporal proof of concept for
-your use case. The agent builds it, runs it locally, explains it, and moves it
-to Temporal Cloud when you're ready.
+Give your coding agent one URL, tell it what you want to build, and get a
+working Temporal proof of concept. The agent builds it, runs it locally, and
+moves it to Temporal Cloud when you're ready.
 
 ## Quick start
 
@@ -27,32 +27,40 @@ For example, an AI agent in Python on macOS:
 fetch https://raw.githubusercontent.com/temporalio/agent-poc-quickstart/main/start/ai-agents/python/macos.md
 ```
 
+Add what you want to build after the URL and the agent starts right away;
+otherwise it asks you once:
+
+```
+fetch https://raw.githubusercontent.com/temporalio/agent-poc-quickstart/main/start/ai-agents/python/macos.md — I want to summarize support tickets with an LLM
+```
+
 For best results, install the Temporal skill for your agent first:
 [docs.temporal.io/with-ai](https://docs.temporal.io/with-ai).
 
 ## What your agent does
 
-1. **Builds a working prototype right away.** No questions first. Model, API,
-   and data-source calls are mocked, so the first run is deterministic and free.
-2. **Runs it on a local Temporal dev server** and confirms it completes.
-3. **Walks you through the pieces** (Workflow, Activities, Task Queue, Worker)
-   in terms of your use case, and writes a `DESIGN.md` into your project.
-4. **Shapes it to what you're building.** Describe your real problem; the agent
-   updates the design, shows it to you, then changes the code.
-5. **Moves it to Temporal Cloud** when you're happy with it, explaining each
-   step, and helps you decide where the Worker should run.
+1. **Finds out what you're building,** from your prompt or by asking you once,
+   with options for your use case.
+2. **Writes a `DESIGN.md`** into your project and shows it to you.
+3. **Builds it and runs it on a local Temporal dev server.** Model, API, and
+   data-source calls are mocked, so the first run is deterministic and free.
+4. **Changes it as you describe your real problem,** updating the design and
+   showing it to you before changing the code.
+5. **Moves it to Temporal Cloud,** explaining each step, in a `tpoc-` namespace
+   of your own.
+6. **Helps you decide where the Worker should run.**
 
 Step 5 needs a Temporal Cloud account. The agent installs the Temporal CLI if
 it's missing.
 
 ## Use cases
 
-| Use case | Starting prototype |
+| Use case | Example goals |
 |---|---|
-| **AI agents & applications** | Plans topics, researches three in parallel, and synthesizes a report |
-| **Data pipelines, ETL, or background processing** | Splits a record set into chunks, processes each in a child Workflow, and totals the results |
+| **AI agents & applications** | Coordinate multiple AI, tool, or agent steps; keep durable state for an agent or session; retry flaky model calls safely |
+| **Data pipelines, ETL, or background processing** | Process many records reliably; run work in parallel while controlling concurrency; resume after partial failure |
 
-From there, the agent matches what you describe to Temporal
+The agent matches what you describe to Temporal
 [design patterns](https://docs.temporal.io/design-patterns): retries,
 rate limiting, batching, durable agent state, and more.
 
@@ -68,7 +76,7 @@ so this repo only maps use cases to patterns.
 | Path | Contents |
 |---|---|
 | `AGENTS.md` | The steps the agent follows |
-| `use-cases/*.yaml` | Each use case's starting prototype and goals, mapped to patterns |
+| `use-cases/*.yaml` | Each use case's goals, mapped to patterns |
 | `patterns.yaml` | Pattern definitions, with the conditions and limits for choosing each |
 | `cloud-setup.md` | CLI install, Temporal Cloud connection, Worker hosting options |
 | `templates/DESIGN.md` | The design document the agent writes into your project |
